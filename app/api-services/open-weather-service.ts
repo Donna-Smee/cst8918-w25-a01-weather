@@ -17,14 +17,17 @@ interface FetchWeatherDataParams {
   lon: number
   units: string
 }
-export async function fetchWeatherData({
+/*export async function fetchWeatherData({
   lat,
   lon,
   units
 }: FetchWeatherDataParams) {
-  const baseURL = 'https://api.openweathermap.org/data/3.0/onecall'
-  const queryString = `lat=${lat}&lon=${lon}&units=${units}&appid=${API_KEY}`
 
+   // Debugging: print the API_KEY to the console
+   console.log("API Key inside fetchWeatherData:", API_KEY);
+
+  const baseURL = 'https://api.openweathermap.org/data/2.5/weather'
+  const queryString = `lat=${lat}&lon=${lon}&units=${units}&appid=${API_KEY}`
   const cacheEntry = getCacheEntry(queryString)
   if (cacheEntry && !isDataStale(cacheEntry.lastFetch)) {
     return cacheEntry.data
@@ -32,8 +35,62 @@ export async function fetchWeatherData({
   const response = await fetch(`${baseURL}?${queryString}`)
   const data = await response.json()
   setCacheEntry(queryString, data)
+
+  // Debugging: print the API_KEY to the console
+  console.log("API data inside fetchWeatherData:", data);
   return data
 }
+*/
+
+
+// FROM ChatGPT
+export async function fetchWeatherData({
+  lat,
+  lon,
+  units
+}: FetchWeatherDataParams) {
+
+  const baseURL = 'https://api.openweathermap.org/data/2.5/weather'
+  const queryString = `lat=${lat}&lon=${lon}&units=${units}&appid=${API_KEY}`
+  const cacheEntry = getCacheEntry(queryString)
+  if (cacheEntry && !isDataStale(cacheEntry.lastFetch)) {
+    return cacheEntry.data
+  }
+
+  const response = await fetch(`${baseURL}?${queryString}`)
+  const data: WeatherResponse = await response.json()
+
+  
+
+  // Transform the data to match your application's needs (with a 'current' property)
+  const transformedData = {
+    current: {
+      temp: data.main.temp,
+      feels_like: data.main.feels_like,
+      temp_min: data.main.temp_min,
+      temp_max: data.main.temp_max,
+      weather: data.weather,
+      humidity: data.main.humidity,
+      wind_speed: data.wind.speed,
+      wind_direction: data.wind.deg,
+      clouds: data.clouds.all,
+      visibility: data.visibility,
+      dt: data.dt,
+      timezone_offset: data.timezone,
+      name: data.name,
+      country: data.sys.country
+    }
+  }
+
+  // Cache the transformed data, not the raw data
+  setCacheEntry(queryString, transformedData)
+
+  // Debugging: print the transformed data
+  console.log("Transformed Weather Data:", transformedData);
+
+  return transformedData
+}
+
 
 export async function getGeoCoordsForPostalCode(
   postalCode: string,
